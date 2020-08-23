@@ -1,0 +1,9 @@
+[package]
+name = "p5"
+version = "0.1.0"
+authors = ["Maan2003 <Manmeetmann2003@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+wasm-bindgen = "0.2.67"
+js-sys = "*"
