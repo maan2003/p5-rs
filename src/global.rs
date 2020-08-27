@@ -1,3 +1,4 @@
+#![allow(non_upper_case_globals)]
 use crate::types::*;
 use crate::constants::*;
 use wasm_bindgen::prelude::*;
