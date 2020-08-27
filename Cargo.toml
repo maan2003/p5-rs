@@ -3,7 +3,14 @@ name = "p5-sys"
 version = "0.1.0"
 authors = ["Maan2003 <Manmeetmann2003@gmail.com>"]
 edition = "2018"
+description = "bindings to p5.js"
+license = "MIT OR Apache-2.0"
+keywords = ["creative", "graphics", "wasm"]
+categories = ["wasm", "graphics"]
+documentation = "https://docs.rs/p5-sys"
+repository = "https://github.com/Maan2003/p5-rs"
+homepage = "https://github.com/Maan2003/p5-rs"
 
 [dependencies]
 wasm-bindgen = "0.2.67"
-js-sys = "*"
+js-sys = "0.3.44"
