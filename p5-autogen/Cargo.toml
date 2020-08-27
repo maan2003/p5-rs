@@ -1,0 +1,13 @@
+[package]
+name = "p5-autogen"
+version = "0.1.0"
+authors = ["Maan2003 <Manmeetmann2003@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = "*"
+serde = {version = "*", features = ["derive"] }
+heck = "*"
+scraper = "*"

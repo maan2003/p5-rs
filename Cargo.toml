@@ -1,5 +1,5 @@
 [package]
-name = "p5"
+name = "p5-sys"
 version = "0.1.0"
 authors = ["Maan2003 <Manmeetmann2003@gmail.com>"]
 edition = "2018"
