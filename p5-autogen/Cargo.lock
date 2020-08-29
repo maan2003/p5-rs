@@ -212,6 +212,7 @@ name = "p5-autogen"
 version = "0.1.0"
 dependencies = [
  "heck",
+ "rand",
  "scraper",
  "serde",
  "serde_json",

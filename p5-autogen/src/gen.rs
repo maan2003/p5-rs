@@ -45,6 +45,7 @@ struct Method {
 
 impl From<ast::Method> for Method {
     fn from(val: ast::Method) -> Self {
+        
         Self {
             name: escape_rust_keyword(&val.name).to_owned(),
             ret: match val.checked.returnType.into_iter().next().unwrap() {
@@ -57,7 +58,7 @@ impl From<ast::Method> for Method {
 }
 
 fn gen_single_fn(func: &Method, w: &mut impl std::io::Write) {
-    static mut VISITED : Vec<String> = Vec::new();
+    static VISITED : Mutex<Vec<String>> = Vec::new();
     match func.params.iter().enumerate().find(|(_, p)| p.optional || matches!(p.ty, Type::Union(_))) {
         Some((i, p)) if p.optional => {
             let mut func = func.clone();
@@ -87,12 +88,11 @@ fn gen_single_fn(func: &Method, w: &mut impl std::io::Write) {
             let args_tup: String = args_types.iter().map(|t| format!("{},",t)).collect();
             let extern_args:String = args_types.iter().map(|s| format!("_ : {}, ",s.replace("'_",""))).collect();
             let fn_sig = format!("({args_ty}) -> {st_name}",args_ty = args_tup, st_name = func.name.to_camel_case());
-            unsafe {
-                if VISITED.contains(&fn_sig) {
-                    return
-                }
-                VISITED.push(fn_sig);
+            let visited = VISITED.lock().unwrap();
+            if visited.contains(&fn_sig) {
+                return
             }
+            visited.push(fn_sig);
             let return_type = get_rust_ret_ty(&func.ret);
             let js_return_type = if return_type == "()" {
                 String::new()
@@ -101,14 +101,16 @@ fn gen_single_fn(func: &Method, w: &mut impl std::io::Write) {
             };
             write!(w, 
 r#"
+#[wasm_bindgen]
+extern {{
+    #[wasm_bindgen(js_name = "{js_org_name}")]
+    fn {js_name}({args}) {js_return_type};
+}}
+
 #[doc(hidden)]
 impl FnOnce<({args_ty})> for {st_name}InternalType {{
     type Output = {return_type};
     extern "rust-call" fn call_once(self, args: ({args_ty})) -> Self::Output {{
-        #[wasm_bindgen]
-        extern {{
-            fn {js_name}({args}) {js_return_type};
-        }}
         {js_name}.call(args)
     }}
 }}
@@ -116,10 +118,6 @@ impl FnOnce<({args_ty})> for {st_name}InternalType {{
 #[doc(hidden)]
 impl FnMut<({args_ty})> for {st_name}InternalType {{
     extern "rust-call" fn call_mut(&mut self, args: ({args_ty})) -> Self::Output {{
-        #[wasm_bindgen]
-        extern {{
-            fn {js_name}({args}) {js_return_type};
-        }}
         {js_name}.call(args)
     }}
 }}
@@ -127,14 +125,10 @@ impl FnMut<({args_ty})> for {st_name}InternalType {{
 #[doc(hidden)]
 impl Fn<({args_ty})> for {st_name}InternalType {{
     extern "rust-call" fn call(&self, args: ({args_ty})) -> Self::Output {{
-        #[wasm_bindgen]
-        extern {{
-            fn {js_name}({args}) {js_return_type};
-        }}
         {js_name}.call(args)
     }}
 }}
-"#, st_name = func.name.to_camel_case(), js_name = func.name,
+"#, st_name = func.name.to_camel_case(),js_org_name = func.name , js_name = format!("{}{}", func.name, rand::random::<u32>()),
     args_ty = args_tup, args = extern_args, return_type = return_type,js_return_type=js_return_type
 );
         }
@@ -207,7 +201,9 @@ fn gen_docs(d: &ast::Description, w: &mut impl std::io::Write) {
                 writeln!(w, "#[doc = r##\"<code>{}{}</code> {}\n\"##]", param.name,if param.optional { "?" } else { "" }, desc);
                 writeln!(w, "///");
             }
-            writeln!(w, "///\n/// ---\n///");
+            writeln!(w, "///\n\
+                         /// ---\n\
+                         ///");
         }
     }
 
